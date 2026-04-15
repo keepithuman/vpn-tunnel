@@ -1,0 +1,6020 @@
+{
+  "project": {
+    "_id": "7a363f30062b628589e280f0",
+    "iid": 1,
+    "name": "VPN Tunnel Provisioning",
+    "description": "IPsec VPN hub-and-spoke provisioning on Cisco ASA with NetBox IPAM and ServiceNow integration",
+    "thumbnail": "",
+    "backgroundColor": "#FFFFFF",
+    "components": [
+      {
+        "iid": 1,
+        "type": "workflow",
+        "reference": "e66ac337-dc85-4d8a-b195-a5b51c61ce79",
+        "folder": "/",
+        "document": {
+          "name": "VPN - Pre-Flight Check",
+          "type": "automation",
+          "canvasVersion": 3,
+          "font_size": 12,
+          "preAutomationTime": 0,
+          "sla": 0,
+          "created": "2026-04-15T00:00:00.000Z",
+          "created_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "last_updated": "2026-04-15T00:00:00.000Z",
+          "last_updated_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "createdVersion": "2024.1",
+          "lastUpdatedVersion": "2024.1",
+          "migrationVersion": 1,
+          "tags": [],
+          "groups": [],
+          "uuid": "ff7cd061-414d-420b-a3f8-86391386dd5b",
+          "scenarios": [],
+          "tasks": {
+            "workflow_start": {
+              "name": "workflow_start",
+              "groups": [],
+              "nodeLocation": {
+                "x": 50,
+                "y": 600
+              }
+            },
+            "workflow_end": {
+              "name": "workflow_end",
+              "groups": [],
+              "nodeLocation": {
+                "x": 2600,
+                "y": 600
+              }
+            },
+            "a1b2": {
+              "name": "merge",
+              "canvasName": "merge",
+              "summary": "Build SNOW request",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "data_to_merge": [
+                    {
+                      "key": "changeId",
+                      "value": {
+                        "task": "job",
+                        "variable": "snow_ticket_id"
+                      }
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "merged_object": "$var.job.snow_req"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 250,
+                "y": 600
+              }
+            },
+            "b2c3": {
+              "name": "getNormalChangeRequestById",
+              "canvasName": "getNormalChangeRequestById",
+              "summary": "Get SNOW Change Request",
+              "location": "Adapter",
+              "locationType": "Servicenow",
+              "app": "Servicenow",
+              "type": "automatic",
+              "displayName": "ServiceNow",
+              "variables": {
+                "incoming": {
+                  "changeId": "$var.job.snow_ticket_id",
+                  "sysparmQuery": "",
+                  "adapter_id": "ServiceNow"
+                },
+                "outgoing": {
+                  "result": "$var.job.snow_result"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 500,
+                "y": 600
+              }
+            },
+            "c3d4": {
+              "name": "query",
+              "canvasName": "query",
+              "summary": "Extract snow_state",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "pass_on_null": false,
+                  "query": "response.state",
+                  "obj": "$var.job.snow_result"
+                },
+                "outgoing": {
+                  "return_data": "$var.job.snow_state"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 750,
+                "y": 600
+              }
+            },
+            "d4e5": {
+              "name": "evaluation",
+              "canvasName": "evaluation",
+              "summary": "SNOW state != Closed",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "all_true_flag": true,
+                  "evaluation_groups": [
+                    {
+                      "all_true_flag": true,
+                      "evaluations": [
+                        {
+                          "operand_1": {
+                            "task": "job",
+                            "variable": "snow_state"
+                          },
+                          "operator": "!=",
+                          "operand_2": {
+                            "task": "static",
+                            "variable": "Closed"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "return_value": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1000,
+                "y": 600
+              }
+            },
+            "e5f6": {
+              "name": "isAlive",
+              "canvasName": "isAlive",
+              "summary": "Check hub reachability",
+              "location": "Application",
+              "locationType": null,
+              "app": "ConfigurationManager",
+              "type": "automatic",
+              "displayName": "ConfigurationManager",
+              "variables": {
+                "incoming": {
+                  "name": "$var.job.hub_hostname"
+                },
+                "outgoing": {
+                  "status": "$var.job.hub_alive_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1250,
+                "y": 600
+              }
+            },
+            "f6a7": {
+              "name": "evaluation",
+              "canvasName": "evaluation",
+              "summary": "Hub is alive",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "all_true_flag": true,
+                  "evaluation_groups": [
+                    {
+                      "all_true_flag": true,
+                      "evaluations": [
+                        {
+                          "operand_1": {
+                            "task": "job",
+                            "variable": "hub_alive_status"
+                          },
+                          "operator": "!=",
+                          "operand_2": {
+                            "task": "static",
+                            "variable": "false"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "return_value": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1500,
+                "y": 600
+              }
+            },
+            "a7b8": {
+              "name": "isAlive",
+              "canvasName": "isAlive",
+              "summary": "Check spoke reachability",
+              "location": "Application",
+              "locationType": null,
+              "app": "ConfigurationManager",
+              "type": "automatic",
+              "displayName": "ConfigurationManager",
+              "variables": {
+                "incoming": {
+                  "name": "$var.job.spoke_hostname"
+                },
+                "outgoing": {
+                  "status": "$var.job.spoke_alive_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1750,
+                "y": 600
+              }
+            },
+            "b8c9": {
+              "name": "evaluation",
+              "canvasName": "evaluation",
+              "summary": "Spoke is alive",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "all_true_flag": true,
+                  "evaluation_groups": [
+                    {
+                      "all_true_flag": true,
+                      "evaluations": [
+                        {
+                          "operand_1": {
+                            "task": "job",
+                            "variable": "spoke_alive_status"
+                          },
+                          "operator": "!=",
+                          "operand_2": {
+                            "task": "static",
+                            "variable": "false"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "return_value": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 2000,
+                "y": 600
+              }
+            },
+            "c9d0": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "Set success",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "preflight_status",
+                  "value": "success"
+                },
+                "outgoing": {
+                  "value": "$var.job.preflight_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 2250,
+                "y": 600
+              }
+            },
+            "e1f2": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "SNOW check failed",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "preflight_status",
+                  "value": "failed_snow_check"
+                },
+                "outgoing": {
+                  "value": "$var.job.preflight_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1000,
+                "y": 870
+              }
+            },
+            "f2a3": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "Hub unreachable",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "preflight_status",
+                  "value": "failed_hub_unreachable"
+                },
+                "outgoing": {
+                  "value": "$var.job.preflight_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1250,
+                "y": 870
+              }
+            },
+            "a3b4": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "Spoke unreachable",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "preflight_status",
+                  "value": "failed_spoke_unreachable"
+                },
+                "outgoing": {
+                  "value": "$var.job.preflight_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1750,
+                "y": 870
+              }
+            },
+            "b4c5": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "SNOW adapter error",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "preflight_status",
+                  "value": "failed_snow_error"
+                },
+                "outgoing": {
+                  "value": "$var.job.preflight_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 500,
+                "y": 870
+              }
+            }
+          },
+          "transitions": {
+            "workflow_start": {
+              "a1b2": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "a1b2": {
+              "b2c3": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "b2c3": {
+              "c3d4": {
+                "type": "standard",
+                "state": "success"
+              },
+              "b4c5": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "c3d4": {
+              "d4e5": {
+                "type": "standard",
+                "state": "success"
+              },
+              "e1f2": {
+                "type": "standard",
+                "state": "failure"
+              }
+            },
+            "d4e5": {
+              "e5f6": {
+                "type": "standard",
+                "state": "success"
+              },
+              "e1f2": {
+                "type": "standard",
+                "state": "failure"
+              }
+            },
+            "e5f6": {
+              "f6a7": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "f6a7": {
+              "a7b8": {
+                "type": "standard",
+                "state": "success"
+              },
+              "f2a3": {
+                "type": "standard",
+                "state": "failure"
+              }
+            },
+            "a7b8": {
+              "b8c9": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "b8c9": {
+              "c9d0": {
+                "type": "standard",
+                "state": "success"
+              },
+              "a3b4": {
+                "type": "standard",
+                "state": "failure"
+              }
+            },
+            "c9d0": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "e1f2": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "f2a3": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "a3b4": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "b4c5": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "workflow_end": {}
+          },
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "snow_ticket_id": {
+                "title": "snow_ticket_id",
+                "type": "string"
+              },
+              "hub_hostname": {
+                "title": "hub_hostname",
+                "type": "string"
+              },
+              "spoke_hostname": {
+                "title": "spoke_hostname",
+                "type": "string"
+              },
+              "hub_wan_interface": {
+                "title": "hub_wan_interface",
+                "type": "string"
+              },
+              "spoke_wan_interface": {
+                "title": "spoke_wan_interface",
+                "type": "string"
+              },
+              "hub_trustpoint": {
+                "title": "hub_trustpoint",
+                "type": "string"
+              },
+              "spoke_trustpoint": {
+                "title": "spoke_trustpoint",
+                "type": "string"
+              }
+            },
+            "required": [
+              "snow_ticket_id",
+              "hub_hostname",
+              "spoke_hostname"
+            ]
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "preflight_status": {
+                "type": "string"
+              },
+              "hub_alive_status": {
+                "type": "string"
+              },
+              "spoke_alive_status": {
+                "type": "string"
+              },
+              "snow_state": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      {
+        "iid": 2,
+        "type": "workflow",
+        "reference": "2de732a3-89df-4238-891b-ba91205f0bc1",
+        "folder": "/",
+        "document": {
+          "name": "VPN - Tunnel Design",
+          "type": "automation",
+          "canvasVersion": 3,
+          "font_size": 12,
+          "preAutomationTime": 0,
+          "sla": 0,
+          "created": "2026-04-15T00:00:00.000Z",
+          "created_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "last_updated": "2026-04-15T00:00:00.000Z",
+          "last_updated_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "createdVersion": "2024.1",
+          "lastUpdatedVersion": "2024.1",
+          "migrationVersion": 1,
+          "tags": [],
+          "groups": [],
+          "uuid": "1f52a72b-21e4-4f99-8643-79bde7e09ca0",
+          "scenarios": [],
+          "tasks": {
+            "workflow_start": {
+              "name": "workflow_start",
+              "groups": [],
+              "nodeLocation": {
+                "x": 50,
+                "y": 600
+              }
+            },
+            "workflow_end": {
+              "name": "workflow_end",
+              "groups": [],
+              "nodeLocation": {
+                "x": 2800,
+                "y": 600
+              }
+            },
+            "a1b2": {
+              "name": "getIpamPrefixes",
+              "canvasName": "getIpamPrefixes",
+              "summary": "Find NetBox prefix pool",
+              "location": "Adapter",
+              "locationType": "Netbox",
+              "app": "Netbox",
+              "type": "automatic",
+              "displayName": "netbox-selab",
+              "variables": {
+                "incoming": {
+                  "q": "$var.job.netbox_prefix_pool_name",
+                  "isPool": true,
+                  "limit": 1,
+                  "offset": 0,
+                  "adapter_id": "netbox-selab"
+                },
+                "outgoing": {
+                  "result": "$var.job.prefix_pool_result"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 250,
+                "y": 600
+              }
+            },
+            "b2c3": {
+              "name": "query",
+              "canvasName": "query",
+              "summary": "Extract prefix_pool_id",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "pass_on_null": false,
+                  "query": "response.results[0].id",
+                  "obj": "$var.job.prefix_pool_result"
+                },
+                "outgoing": {
+                  "return_data": "$var.job.prefix_pool_id"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 500,
+                "y": 600
+              }
+            },
+            "c3d4": {
+              "name": "getIpamPrefixesIdAvailablePrefixes",
+              "canvasName": "getIpamPrefixesIdAvailablePrefixes",
+              "summary": "Get available /30 prefixes",
+              "location": "Adapter",
+              "locationType": "Netbox",
+              "app": "Netbox",
+              "type": "automatic",
+              "displayName": "netbox-selab",
+              "variables": {
+                "incoming": {
+                  "id": "$var.job.prefix_pool_id",
+                  "adapter_id": "netbox-selab"
+                },
+                "outgoing": {
+                  "result": "$var.job.available_prefixes_result"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 750,
+                "y": 600
+              }
+            },
+            "d4e5": {
+              "name": "query",
+              "canvasName": "query",
+              "summary": "Extract allocated_prefix",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "pass_on_null": false,
+                  "query": "response[0].prefix",
+                  "obj": "$var.job.available_prefixes_result"
+                },
+                "outgoing": {
+                  "return_data": "$var.job.allocated_prefix"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1000,
+                "y": 600
+              }
+            },
+            "e5f6": {
+              "name": "merge",
+              "canvasName": "merge",
+              "summary": "Build reservation body",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "data_to_merge": [
+                    {
+                      "key": "prefix_length",
+                      "value": {
+                        "task": "static",
+                        "variable": 30
+                      }
+                    },
+                    {
+                      "key": "description",
+                      "value": {
+                        "task": "job",
+                        "variable": "spoke_site_name"
+                      }
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "merged_object": "$var.job.reserve_body"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1250,
+                "y": 600
+              }
+            },
+            "f6a7": {
+              "name": "postIpamPrefixesIdAvailablePrefixes",
+              "canvasName": "postIpamPrefixesIdAvailablePrefixes",
+              "summary": "Reserve /30 prefix",
+              "location": "Adapter",
+              "locationType": "Netbox",
+              "app": "Netbox",
+              "type": "automatic",
+              "displayName": "netbox-selab",
+              "variables": {
+                "incoming": {
+                  "id": "$var.job.prefix_pool_id",
+                  "data": "$var.job.reserve_body",
+                  "adapter_id": "netbox-selab"
+                },
+                "outgoing": {
+                  "result": "$var.job.reserved_prefix_result"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1500,
+                "y": 600
+              }
+            },
+            "a7b8": {
+              "name": "getIpamPrefixes",
+              "canvasName": "getIpamPrefixes",
+              "summary": "Count existing tunnel prefixes for seq_num",
+              "location": "Adapter",
+              "locationType": "Netbox",
+              "app": "Netbox",
+              "type": "automatic",
+              "displayName": "netbox-selab",
+              "variables": {
+                "incoming": {
+                  "q": "$var.job.netbox_prefix_pool_name",
+                  "limit": 500,
+                  "adapter_id": "netbox-selab"
+                },
+                "outgoing": {
+                  "result": "$var.job.tunnel_prefixes_result"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1750,
+                "y": 600
+              }
+            },
+            "b8c9": {
+              "name": "query",
+              "canvasName": "query",
+              "summary": "Extract tunnel_count",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "pass_on_null": false,
+                  "query": "response.count",
+                  "obj": "$var.job.tunnel_prefixes_result"
+                },
+                "outgoing": {
+                  "return_data": "$var.job.tunnel_count"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 2000,
+                "y": 600
+              }
+            },
+            "c9d0": {
+              "name": "merge",
+              "canvasName": "merge",
+              "summary": "Build hub config vars",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "data_to_merge": [
+                    {
+                      "key": "seq_num",
+                      "value": {
+                        "task": "job",
+                        "variable": "tunnel_count"
+                      }
+                    },
+                    {
+                      "key": "spoke_wan_ip",
+                      "value": {
+                        "task": "job",
+                        "variable": "spoke_wan_ip"
+                      }
+                    },
+                    {
+                      "key": "hub_trustpoint",
+                      "value": {
+                        "task": "job",
+                        "variable": "hub_trustpoint"
+                      }
+                    },
+                    {
+                      "key": "spoke_as",
+                      "value": {
+                        "task": "job",
+                        "variable": "spoke_as"
+                      }
+                    },
+                    {
+                      "key": "crypto_map_name",
+                      "value": {
+                        "task": "job",
+                        "variable": "crypto_map_name"
+                      }
+                    },
+                    {
+                      "key": "allocated_prefix",
+                      "value": {
+                        "task": "job",
+                        "variable": "allocated_prefix"
+                      }
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "merged_object": "$var.job.hub_config_vars"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 2250,
+                "y": 600
+              }
+            },
+            "d0e1": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "Set success",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "taskStatus",
+                  "value": "success"
+                },
+                "outgoing": {
+                  "value": "$var.job.taskStatus"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 2550,
+                "y": 600
+              }
+            },
+            "err1": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "NetBox pool lookup failed",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "taskStatus",
+                  "value": "error_netbox"
+                },
+                "outgoing": {
+                  "value": "$var.job.taskStatus"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 250,
+                "y": 870
+              }
+            },
+            "err2": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "Prefix reservation failed",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "taskStatus",
+                  "value": "error_prefix_reserve"
+                },
+                "outgoing": {
+                  "value": "$var.job.taskStatus"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1500,
+                "y": 870
+              }
+            }
+          },
+          "transitions": {
+            "workflow_start": {
+              "a1b2": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "a1b2": {
+              "b2c3": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "b2c3": {
+              "c3d4": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "failure"
+              }
+            },
+            "c3d4": {
+              "d4e5": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "d4e5": {
+              "e5f6": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "e5f6": {
+              "f6a7": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "f6a7": {
+              "a7b8": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err2": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "a7b8": {
+              "b8c9": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err2": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "b8c9": {
+              "c9d0": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "c9d0": {
+              "d0e1": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "d0e1": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "err1": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "err2": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "workflow_end": {}
+          },
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "netbox_prefix_pool_name": {
+                "title": "netbox_prefix_pool_name",
+                "type": "string"
+              },
+              "spoke_site_name": {
+                "title": "spoke_site_name",
+                "type": "string"
+              },
+              "spoke_as": {
+                "title": "spoke_as",
+                "type": "number"
+              },
+              "hub_wan_ip": {
+                "title": "hub_wan_ip",
+                "type": "string"
+              },
+              "spoke_wan_ip": {
+                "title": "spoke_wan_ip",
+                "type": "string"
+              },
+              "hub_trustpoint": {
+                "title": "hub_trustpoint",
+                "type": "string"
+              },
+              "spoke_trustpoint": {
+                "title": "spoke_trustpoint",
+                "type": "string"
+              },
+              "crypto_map_name": {
+                "title": "crypto_map_name",
+                "type": "string"
+              }
+            },
+            "required": [
+              "netbox_prefix_pool_name",
+              "spoke_site_name",
+              "spoke_as",
+              "crypto_map_name"
+            ]
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "taskStatus": {
+                "type": "string"
+              },
+              "allocated_prefix": {
+                "type": "string"
+              },
+              "hub_config_vars": {
+                "type": "object"
+              },
+              "tunnel_count": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      {
+        "iid": 3,
+        "type": "workflow",
+        "reference": "00c7009a-740b-475f-b311-26fa20323b7a",
+        "folder": "/",
+        "document": {
+          "name": "VPN - Config Backup",
+          "type": "automation",
+          "canvasVersion": 3,
+          "font_size": 12,
+          "preAutomationTime": 0,
+          "sla": 0,
+          "created": "2026-04-15T00:00:00.000Z",
+          "created_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "last_updated": "2026-04-15T00:00:00.000Z",
+          "last_updated_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "createdVersion": "2024.1",
+          "lastUpdatedVersion": "2024.1",
+          "migrationVersion": 1,
+          "tags": [],
+          "groups": [],
+          "uuid": "89271fe6-7c7a-437a-a3b9-18ed464ced31",
+          "scenarios": [],
+          "tasks": {
+            "workflow_start": {
+              "name": "workflow_start",
+              "groups": [],
+              "nodeLocation": {
+                "x": 50,
+                "y": 600
+              }
+            },
+            "workflow_end": {
+              "name": "workflow_end",
+              "groups": [],
+              "nodeLocation": {
+                "x": 1000,
+                "y": 600
+              }
+            },
+            "a1b2": {
+              "name": "backUpDevice",
+              "canvasName": "backUpDevice",
+              "summary": "Backup hub ASA config",
+              "location": "Application",
+              "locationType": null,
+              "app": "ConfigurationManager",
+              "type": "automatic",
+              "displayName": "ConfigurationManager",
+              "variables": {
+                "incoming": {
+                  "name": "$var.job.hub_hostname",
+                  "options": {}
+                },
+                "outgoing": {
+                  "status": "$var.job.hub_backup_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 250,
+                "y": 600
+              }
+            },
+            "b2c3": {
+              "name": "backUpDevice",
+              "canvasName": "backUpDevice",
+              "summary": "Backup spoke ASA config",
+              "location": "Application",
+              "locationType": null,
+              "app": "ConfigurationManager",
+              "type": "automatic",
+              "displayName": "ConfigurationManager",
+              "variables": {
+                "incoming": {
+                  "name": "$var.job.spoke_hostname",
+                  "options": {}
+                },
+                "outgoing": {
+                  "status": "$var.job.spoke_backup_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 500,
+                "y": 600
+              }
+            },
+            "c3d4": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "Backup complete",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "taskStatus",
+                  "value": "success"
+                },
+                "outgoing": {
+                  "value": "$var.job.taskStatus"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 750,
+                "y": 600
+              }
+            },
+            "err1": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "Backup failed",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "taskStatus",
+                  "value": "error_backup"
+                },
+                "outgoing": {
+                  "value": "$var.job.taskStatus"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 250,
+                "y": 870
+              }
+            }
+          },
+          "transitions": {
+            "workflow_start": {
+              "a1b2": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "a1b2": {
+              "b2c3": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "b2c3": {
+              "c3d4": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "c3d4": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "err1": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "workflow_end": {}
+          },
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "hub_hostname": {
+                "title": "hub_hostname",
+                "type": "string"
+              },
+              "spoke_hostname": {
+                "title": "spoke_hostname",
+                "type": "string"
+              }
+            },
+            "required": [
+              "hub_hostname",
+              "spoke_hostname"
+            ]
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "taskStatus": {
+                "type": "string"
+              },
+              "hub_backup_status": {
+                "type": "object"
+              },
+              "spoke_backup_status": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      {
+        "iid": 4,
+        "type": "workflow",
+        "reference": "7acf224a-8e3a-4d73-8c38-b50641913fd6",
+        "folder": "/",
+        "document": {
+          "name": "VPN - Configure Hub",
+          "type": "automation",
+          "canvasVersion": 3,
+          "font_size": 12,
+          "preAutomationTime": 0,
+          "sla": 0,
+          "created": "2026-04-15T00:00:00.000Z",
+          "created_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "last_updated": "2026-04-15T00:00:00.000Z",
+          "last_updated_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "createdVersion": "2024.1",
+          "lastUpdatedVersion": "2024.1",
+          "migrationVersion": 1,
+          "tags": [],
+          "groups": [],
+          "uuid": "281bf45a-1dfb-4a87-a1c1-97387ae968c0",
+          "scenarios": [],
+          "tasks": {
+            "workflow_start": {
+              "name": "workflow_start",
+              "groups": [],
+              "nodeLocation": {
+                "x": 50,
+                "y": 600
+              }
+            },
+            "workflow_end": {
+              "name": "workflow_end",
+              "groups": [],
+              "nodeLocation": {
+                "x": 850,
+                "y": 600
+              }
+            },
+            "a1b2": {
+              "name": "RunCommandTemplate",
+              "canvasName": "RunCommandTemplate",
+              "summary": "Push hub IPsec config",
+              "location": "Application",
+              "locationType": null,
+              "app": "MOP",
+              "type": "automatic",
+              "displayName": "MOP",
+              "variables": {
+                "incoming": {
+                  "template": "@7a363f30062b628589e280f0: CT-ASA-Hub-IPsec-Config",
+                  "devices": "$var.job.hub_devices",
+                  "variables": "$var.job.hub_config_vars"
+                },
+                "outgoing": {
+                  "mop_template_results": "$var.job.hub_mop_results"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 250,
+                "y": 600
+              }
+            },
+            "b2c3": {
+              "name": "query",
+              "canvasName": "query",
+              "summary": "Extract hub_config_pass",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "pass_on_null": false,
+                  "query": "all_pass_flag",
+                  "obj": "$var.job.hub_mop_results"
+                },
+                "outgoing": {
+                  "return_data": "$var.job.hub_config_pass"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 500,
+                "y": 600
+              }
+            },
+            "c3d4": {
+              "name": "evaluation",
+              "canvasName": "evaluation",
+              "summary": "Hub config applied ok",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "all_true_flag": true,
+                  "evaluation_groups": [
+                    {
+                      "all_true_flag": true,
+                      "evaluations": [
+                        {
+                          "operand_1": {
+                            "task": "job",
+                            "variable": "hub_config_pass"
+                          },
+                          "operator": "==",
+                          "operand_2": {
+                            "task": "static",
+                            "variable": "true"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "return_value": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 650,
+                "y": 600
+              }
+            },
+            "d4e5": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "Config success",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "taskStatus",
+                  "value": "success"
+                },
+                "outgoing": {
+                  "value": "$var.job.taskStatus"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 800,
+                "y": 530
+              }
+            },
+            "err1": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "Hub config failed",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "taskStatus",
+                  "value": "error_hub_config"
+                },
+                "outgoing": {
+                  "value": "$var.job.taskStatus"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 650,
+                "y": 870
+              }
+            },
+            "err2": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "MOP run failed",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "taskStatus",
+                  "value": "error_hub_mop"
+                },
+                "outgoing": {
+                  "value": "$var.job.taskStatus"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 250,
+                "y": 870
+              }
+            }
+          },
+          "transitions": {
+            "workflow_start": {
+              "a1b2": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "a1b2": {
+              "b2c3": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err2": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "b2c3": {
+              "c3d4": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "c3d4": {
+              "d4e5": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "failure"
+              }
+            },
+            "d4e5": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "err1": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "err2": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "workflow_end": {}
+          },
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "hub_hostname": {
+                "title": "hub_hostname",
+                "type": "string"
+              },
+              "hub_devices": {
+                "title": "hub_devices",
+                "type": "array"
+              },
+              "hub_config_vars": {
+                "title": "hub_config_vars",
+                "type": "object"
+              }
+            },
+            "required": [
+              "hub_devices",
+              "hub_config_vars"
+            ]
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "taskStatus": {
+                "type": "string"
+              },
+              "hub_mop_results": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      {
+        "iid": 5,
+        "type": "workflow",
+        "reference": "83b15bae-1745-464c-8f76-0b95632d3dc5",
+        "folder": "/",
+        "document": {
+          "name": "VPN - Configure Spoke",
+          "type": "automation",
+          "canvasVersion": 3,
+          "font_size": 12,
+          "preAutomationTime": 0,
+          "sla": 0,
+          "created": "2026-04-15T00:00:00.000Z",
+          "created_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "last_updated": "2026-04-15T00:00:00.000Z",
+          "last_updated_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "createdVersion": "2024.1",
+          "lastUpdatedVersion": "2024.1",
+          "migrationVersion": 1,
+          "tags": [],
+          "groups": [],
+          "uuid": "5c55023d-8aeb-4af4-a868-cda4c0b7c59a",
+          "scenarios": [],
+          "tasks": {
+            "workflow_start": {
+              "name": "workflow_start",
+              "groups": [],
+              "nodeLocation": {
+                "x": 50,
+                "y": 600
+              }
+            },
+            "workflow_end": {
+              "name": "workflow_end",
+              "groups": [],
+              "nodeLocation": {
+                "x": 850,
+                "y": 600
+              }
+            },
+            "a1b2": {
+              "name": "RunCommandTemplate",
+              "canvasName": "RunCommandTemplate",
+              "summary": "Push spoke IPsec config",
+              "location": "Application",
+              "locationType": null,
+              "app": "MOP",
+              "type": "automatic",
+              "displayName": "MOP",
+              "variables": {
+                "incoming": {
+                  "template": "@7a363f30062b628589e280f0: CT-ASA-Spoke-IPsec-Config",
+                  "devices": "$var.job.spoke_devices",
+                  "variables": "$var.job.spoke_config_vars"
+                },
+                "outgoing": {
+                  "mop_template_results": "$var.job.spoke_mop_results"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 250,
+                "y": 600
+              }
+            },
+            "b2c3": {
+              "name": "query",
+              "canvasName": "query",
+              "summary": "Extract spoke_config_pass",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "pass_on_null": false,
+                  "query": "all_pass_flag",
+                  "obj": "$var.job.spoke_mop_results"
+                },
+                "outgoing": {
+                  "return_data": "$var.job.spoke_config_pass"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 500,
+                "y": 600
+              }
+            },
+            "c3d4": {
+              "name": "evaluation",
+              "canvasName": "evaluation",
+              "summary": "Spoke config applied ok",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "all_true_flag": true,
+                  "evaluation_groups": [
+                    {
+                      "all_true_flag": true,
+                      "evaluations": [
+                        {
+                          "operand_1": {
+                            "task": "job",
+                            "variable": "spoke_config_pass"
+                          },
+                          "operator": "==",
+                          "operand_2": {
+                            "task": "static",
+                            "variable": "true"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "return_value": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 650,
+                "y": 600
+              }
+            },
+            "d4e5": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "Config success",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "taskStatus",
+                  "value": "success"
+                },
+                "outgoing": {
+                  "value": "$var.job.taskStatus"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 800,
+                "y": 530
+              }
+            },
+            "err1": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "Spoke config failed",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "taskStatus",
+                  "value": "error_spoke_config"
+                },
+                "outgoing": {
+                  "value": "$var.job.taskStatus"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 650,
+                "y": 870
+              }
+            },
+            "err2": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "MOP run failed",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "taskStatus",
+                  "value": "error_spoke_mop"
+                },
+                "outgoing": {
+                  "value": "$var.job.taskStatus"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 250,
+                "y": 870
+              }
+            }
+          },
+          "transitions": {
+            "workflow_start": {
+              "a1b2": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "a1b2": {
+              "b2c3": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err2": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "b2c3": {
+              "c3d4": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "c3d4": {
+              "d4e5": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "failure"
+              }
+            },
+            "d4e5": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "err1": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "err2": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "workflow_end": {}
+          },
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "spoke_hostname": {
+                "title": "spoke_hostname",
+                "type": "string"
+              },
+              "spoke_devices": {
+                "title": "spoke_devices",
+                "type": "array"
+              },
+              "spoke_config_vars": {
+                "title": "spoke_config_vars",
+                "type": "object"
+              }
+            },
+            "required": [
+              "spoke_devices",
+              "spoke_config_vars"
+            ]
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "taskStatus": {
+                "type": "string"
+              },
+              "spoke_mop_results": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      {
+        "iid": 6,
+        "type": "workflow",
+        "reference": "00cbb374-0d35-4520-93d6-a0adedf60caa",
+        "folder": "/",
+        "document": {
+          "name": "VPN - Verify Tunnel",
+          "type": "automation",
+          "canvasVersion": 3,
+          "font_size": 12,
+          "preAutomationTime": 0,
+          "sla": 0,
+          "created": "2026-04-15T00:00:00.000Z",
+          "created_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "last_updated": "2026-04-15T00:00:00.000Z",
+          "last_updated_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "createdVersion": "2024.1",
+          "lastUpdatedVersion": "2024.1",
+          "migrationVersion": 1,
+          "tags": [],
+          "groups": [],
+          "uuid": "9adb0c3b-5516-4a6e-aa3b-f2eb1bc5c202",
+          "scenarios": [],
+          "tasks": {
+            "workflow_start": {
+              "name": "workflow_start",
+              "groups": [],
+              "nodeLocation": {
+                "x": 50,
+                "y": 600
+              }
+            },
+            "workflow_end": {
+              "name": "workflow_end",
+              "groups": [],
+              "nodeLocation": {
+                "x": 2500,
+                "y": 600
+              }
+            },
+            "a1b2": {
+              "name": "RunCommandTemplate",
+              "canvasName": "RunCommandTemplate",
+              "summary": "Check IKEv2 SA on hub",
+              "location": "Application",
+              "locationType": null,
+              "app": "MOP",
+              "type": "automatic",
+              "displayName": "MOP",
+              "variables": {
+                "incoming": {
+                  "template": "@7a363f30062b628589e280f0: CT-ASA-Verify-IKEv2-SA",
+                  "devices": "$var.job.hub_devices",
+                  "variables": {}
+                },
+                "outgoing": {
+                  "mop_template_results": "$var.job.hub_ikev2_results"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 250,
+                "y": 600
+              }
+            },
+            "b2c3": {
+              "name": "query",
+              "canvasName": "query",
+              "summary": "Extract hub_ikev2_pass",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "pass_on_null": false,
+                  "query": "all_pass_flag",
+                  "obj": "$var.job.hub_ikev2_results"
+                },
+                "outgoing": {
+                  "return_data": "$var.job.hub_ikev2_pass"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 500,
+                "y": 600
+              }
+            },
+            "c3d4": {
+              "name": "RunCommandTemplate",
+              "canvasName": "RunCommandTemplate",
+              "summary": "Check IKEv2 SA on spoke",
+              "location": "Application",
+              "locationType": null,
+              "app": "MOP",
+              "type": "automatic",
+              "displayName": "MOP",
+              "variables": {
+                "incoming": {
+                  "template": "@7a363f30062b628589e280f0: CT-ASA-Verify-IKEv2-SA",
+                  "devices": "$var.job.spoke_devices",
+                  "variables": {}
+                },
+                "outgoing": {
+                  "mop_template_results": "$var.job.spoke_ikev2_results"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 750,
+                "y": 600
+              }
+            },
+            "d4e5": {
+              "name": "query",
+              "canvasName": "query",
+              "summary": "Extract spoke_ikev2_pass",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "pass_on_null": false,
+                  "query": "all_pass_flag",
+                  "obj": "$var.job.spoke_ikev2_results"
+                },
+                "outgoing": {
+                  "return_data": "$var.job.spoke_ikev2_pass"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1000,
+                "y": 600
+              }
+            },
+            "e5f6": {
+              "name": "merge",
+              "canvasName": "merge",
+              "summary": "Build hub BGP check vars",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "data_to_merge": [
+                    {
+                      "key": "neighbor_ip",
+                      "value": {
+                        "task": "job",
+                        "variable": "spoke_tunnel_ip"
+                      }
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "merged_object": "$var.job.hub_bgp_vars"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1250,
+                "y": 600
+              }
+            },
+            "f6a7": {
+              "name": "RunCommandTemplate",
+              "canvasName": "RunCommandTemplate",
+              "summary": "Check BGP neighbor on hub",
+              "location": "Application",
+              "locationType": null,
+              "app": "MOP",
+              "type": "automatic",
+              "displayName": "MOP",
+              "variables": {
+                "incoming": {
+                  "template": "@7a363f30062b628589e280f0: CT-ASA-Verify-BGP",
+                  "devices": "$var.job.hub_devices",
+                  "variables": "$var.job.hub_bgp_vars"
+                },
+                "outgoing": {
+                  "mop_template_results": "$var.job.hub_bgp_results"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1450,
+                "y": 600
+              }
+            },
+            "a7b8": {
+              "name": "merge",
+              "canvasName": "merge",
+              "summary": "Build spoke BGP check vars",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "data_to_merge": [
+                    {
+                      "key": "neighbor_ip",
+                      "value": {
+                        "task": "job",
+                        "variable": "hub_tunnel_ip"
+                      }
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "merged_object": "$var.job.spoke_bgp_vars"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1700,
+                "y": 600
+              }
+            },
+            "b8c9": {
+              "name": "RunCommandTemplate",
+              "canvasName": "RunCommandTemplate",
+              "summary": "Check BGP neighbor on spoke",
+              "location": "Application",
+              "locationType": null,
+              "app": "MOP",
+              "type": "automatic",
+              "displayName": "MOP",
+              "variables": {
+                "incoming": {
+                  "template": "@7a363f30062b628589e280f0: CT-ASA-Verify-BGP",
+                  "devices": "$var.job.spoke_devices",
+                  "variables": "$var.job.spoke_bgp_vars"
+                },
+                "outgoing": {
+                  "mop_template_results": "$var.job.spoke_bgp_results"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1900,
+                "y": 600
+              }
+            },
+            "c9d0": {
+              "name": "merge",
+              "canvasName": "merge",
+              "summary": "Build hub ping vars",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "data_to_merge": [
+                    {
+                      "key": "target_ip",
+                      "value": {
+                        "task": "job",
+                        "variable": "spoke_tunnel_ip"
+                      }
+                    },
+                    {
+                      "key": "source_ip",
+                      "value": {
+                        "task": "job",
+                        "variable": "hub_tunnel_ip"
+                      }
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "merged_object": "$var.job.hub_ping_vars"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 2100,
+                "y": 600
+              }
+            },
+            "d0e1": {
+              "name": "RunCommandTemplate",
+              "canvasName": "RunCommandTemplate",
+              "summary": "Ping spoke from hub",
+              "location": "Application",
+              "locationType": null,
+              "app": "MOP",
+              "type": "automatic",
+              "displayName": "MOP",
+              "variables": {
+                "incoming": {
+                  "template": "@7a363f30062b628589e280f0: CT-ASA-Ping-Tunnel",
+                  "devices": "$var.job.hub_devices",
+                  "variables": "$var.job.hub_ping_vars"
+                },
+                "outgoing": {
+                  "mop_template_results": "$var.job.hub_ping_results"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 2250,
+                "y": 600
+              }
+            },
+            "e1f2": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "All checks passed",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "verify_status",
+                  "value": "success"
+                },
+                "outgoing": {
+                  "value": "$var.job.verify_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 2400,
+                "y": 530
+              }
+            },
+            "err1": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "Verification failed",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "verify_status",
+                  "value": "failed"
+                },
+                "outgoing": {
+                  "value": "$var.job.verify_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 600,
+                "y": 870
+              }
+            }
+          },
+          "transitions": {
+            "workflow_start": {
+              "a1b2": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "a1b2": {
+              "b2c3": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "b2c3": {
+              "c3d4": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "failure"
+              }
+            },
+            "c3d4": {
+              "d4e5": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "d4e5": {
+              "e5f6": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "failure"
+              }
+            },
+            "e5f6": {
+              "f6a7": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "f6a7": {
+              "a7b8": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "a7b8": {
+              "b8c9": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "b8c9": {
+              "c9d0": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "c9d0": {
+              "d0e1": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "d0e1": {
+              "e1f2": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "e1f2": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "err1": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "workflow_end": {}
+          },
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "hub_hostname": {
+                "title": "hub_hostname",
+                "type": "string"
+              },
+              "spoke_hostname": {
+                "title": "spoke_hostname",
+                "type": "string"
+              },
+              "hub_devices": {
+                "title": "hub_devices",
+                "type": "array"
+              },
+              "spoke_devices": {
+                "title": "spoke_devices",
+                "type": "array"
+              },
+              "hub_tunnel_ip": {
+                "title": "hub_tunnel_ip",
+                "type": "string"
+              },
+              "spoke_tunnel_ip": {
+                "title": "spoke_tunnel_ip",
+                "type": "string"
+              },
+              "spoke_as": {
+                "title": "spoke_as",
+                "type": "number"
+              },
+              "verify_timeout_minutes": {
+                "title": "verify_timeout_minutes",
+                "type": "number"
+              }
+            },
+            "required": [
+              "hub_devices",
+              "spoke_devices",
+              "hub_tunnel_ip",
+              "spoke_tunnel_ip"
+            ]
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "verify_status": {
+                "type": "string"
+              },
+              "hub_ikev2_results": {
+                "type": "object"
+              },
+              "spoke_ikev2_results": {
+                "type": "object"
+              },
+              "hub_bgp_results": {
+                "type": "object"
+              },
+              "spoke_bgp_results": {
+                "type": "object"
+              },
+              "hub_ping_results": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      {
+        "iid": 7,
+        "type": "workflow",
+        "reference": "d7fe1597-7da6-47ff-96f2-18c206f55d09",
+        "folder": "/",
+        "document": {
+          "name": "VPN - Rollback",
+          "type": "automation",
+          "canvasVersion": 3,
+          "font_size": 12,
+          "preAutomationTime": 0,
+          "sla": 0,
+          "created": "2026-04-15T00:00:00.000Z",
+          "created_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "last_updated": "2026-04-15T00:00:00.000Z",
+          "last_updated_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "createdVersion": "2024.1",
+          "lastUpdatedVersion": "2024.1",
+          "migrationVersion": 1,
+          "tags": [],
+          "groups": [],
+          "uuid": "484ce147-8665-4134-aac8-cf6a3f65ab6f",
+          "scenarios": [],
+          "tasks": {
+            "workflow_start": {
+              "name": "workflow_start",
+              "groups": [],
+              "nodeLocation": {
+                "x": 50,
+                "y": 600
+              }
+            },
+            "workflow_end": {
+              "name": "workflow_end",
+              "groups": [],
+              "nodeLocation": {
+                "x": 1600,
+                "y": 600
+              }
+            },
+            "a1b2": {
+              "name": "evaluation",
+              "canvasName": "evaluation",
+              "summary": "Was spoke configured?",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "all_true_flag": true,
+                  "evaluation_groups": [
+                    {
+                      "all_true_flag": true,
+                      "evaluations": [
+                        {
+                          "operand_1": {
+                            "task": "job",
+                            "variable": "configured_spoke"
+                          },
+                          "operator": "==",
+                          "operand_2": {
+                            "task": "static",
+                            "variable": "true"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "return_value": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 250,
+                "y": 600
+              }
+            },
+            "b2c3": {
+              "name": "RunCommandTemplate",
+              "canvasName": "RunCommandTemplate",
+              "summary": "Remove spoke tunnel config",
+              "location": "Application",
+              "locationType": null,
+              "app": "MOP",
+              "type": "automatic",
+              "displayName": "MOP",
+              "variables": {
+                "incoming": {
+                  "template": "@7a363f30062b628589e280f0: CT-ASA-Spoke-Rollback",
+                  "devices": "$var.job.spoke_devices",
+                  "variables": "$var.job.spoke_config_vars"
+                },
+                "outgoing": {
+                  "mop_template_results": "$var.job.spoke_rollback_results"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 500,
+                "y": 500
+              }
+            },
+            "c3d4": {
+              "name": "evaluation",
+              "canvasName": "evaluation",
+              "summary": "Was hub configured?",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "all_true_flag": true,
+                  "evaluation_groups": [
+                    {
+                      "all_true_flag": true,
+                      "evaluations": [
+                        {
+                          "operand_1": {
+                            "task": "job",
+                            "variable": "configured_hub"
+                          },
+                          "operator": "==",
+                          "operand_2": {
+                            "task": "static",
+                            "variable": "true"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "return_value": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 750,
+                "y": 600
+              }
+            },
+            "d4e5": {
+              "name": "RunCommandTemplate",
+              "canvasName": "RunCommandTemplate",
+              "summary": "Remove hub tunnel entry",
+              "location": "Application",
+              "locationType": null,
+              "app": "MOP",
+              "type": "automatic",
+              "displayName": "MOP",
+              "variables": {
+                "incoming": {
+                  "template": "@7a363f30062b628589e280f0: CT-ASA-Hub-Rollback",
+                  "devices": "$var.job.hub_devices",
+                  "variables": "$var.job.hub_config_vars"
+                },
+                "outgoing": {
+                  "mop_template_results": "$var.job.hub_rollback_results"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1000,
+                "y": 500
+              }
+            },
+            "e5f6": {
+              "name": "backUpDevice",
+              "canvasName": "backUpDevice",
+              "summary": "Restore hub from backup",
+              "location": "Application",
+              "locationType": null,
+              "app": "ConfigurationManager",
+              "type": "automatic",
+              "displayName": "ConfigurationManager",
+              "variables": {
+                "incoming": {
+                  "name": "$var.job.hub_hostname",
+                  "options": {}
+                },
+                "outgoing": {
+                  "status": "$var.job.hub_restore_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1250,
+                "y": 600
+              }
+            },
+            "f6a7": {
+              "name": "backUpDevice",
+              "canvasName": "backUpDevice",
+              "summary": "Restore spoke from backup",
+              "location": "Application",
+              "locationType": null,
+              "app": "ConfigurationManager",
+              "type": "automatic",
+              "displayName": "ConfigurationManager",
+              "variables": {
+                "incoming": {
+                  "name": "$var.job.spoke_hostname",
+                  "options": {}
+                },
+                "outgoing": {
+                  "status": "$var.job.spoke_restore_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1450,
+                "y": 600
+              }
+            },
+            "a7b8": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "Rollback complete",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "rollback_status",
+                  "value": "success"
+                },
+                "outgoing": {
+                  "value": "$var.job.rollback_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1600,
+                "y": 530
+              }
+            },
+            "err1": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "Rollback error",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "rollback_status",
+                  "value": "error"
+                },
+                "outgoing": {
+                  "value": "$var.job.rollback_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 500,
+                "y": 870
+              }
+            }
+          },
+          "transitions": {
+            "workflow_start": {
+              "a1b2": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "a1b2": {
+              "b2c3": {
+                "type": "standard",
+                "state": "success"
+              },
+              "c3d4": {
+                "type": "standard",
+                "state": "failure"
+              }
+            },
+            "b2c3": {
+              "c3d4": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "c3d4": {
+              "d4e5": {
+                "type": "standard",
+                "state": "success"
+              },
+              "e5f6": {
+                "type": "standard",
+                "state": "failure"
+              }
+            },
+            "d4e5": {
+              "e5f6": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "e5f6": {
+              "f6a7": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "f6a7": {
+              "a7b8": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "a7b8": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "err1": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "workflow_end": {}
+          },
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "hub_hostname": {
+                "title": "hub_hostname",
+                "type": "string"
+              },
+              "spoke_hostname": {
+                "title": "spoke_hostname",
+                "type": "string"
+              },
+              "hub_devices": {
+                "title": "hub_devices",
+                "type": "array"
+              },
+              "spoke_devices": {
+                "title": "spoke_devices",
+                "type": "array"
+              },
+              "hub_config_vars": {
+                "title": "hub_config_vars",
+                "type": "object"
+              },
+              "spoke_config_vars": {
+                "title": "spoke_config_vars",
+                "type": "object"
+              },
+              "configured_hub": {
+                "title": "configured_hub",
+                "type": "boolean"
+              },
+              "configured_spoke": {
+                "title": "configured_spoke",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "hub_devices",
+              "spoke_devices"
+            ]
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "rollback_status": {
+                "type": "string"
+              },
+              "hub_rollback_results": {
+                "type": "object"
+              },
+              "spoke_rollback_results": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      {
+        "iid": 8,
+        "type": "workflow",
+        "reference": "b65a19ea-469c-4676-b5ac-3036dc632ac3",
+        "folder": "/",
+        "document": {
+          "name": "VPN - Close Out",
+          "type": "automation",
+          "canvasVersion": 3,
+          "font_size": 12,
+          "preAutomationTime": 0,
+          "sla": 0,
+          "created": "2026-04-15T00:00:00.000Z",
+          "created_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "last_updated": "2026-04-15T00:00:00.000Z",
+          "last_updated_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "createdVersion": "2024.1",
+          "lastUpdatedVersion": "2024.1",
+          "migrationVersion": 1,
+          "tags": [],
+          "groups": [],
+          "uuid": "a0c7a6f0-2363-4c7d-99e4-52606cabd31d",
+          "scenarios": [],
+          "tasks": {
+            "workflow_start": {
+              "name": "workflow_start",
+              "groups": [],
+              "nodeLocation": {
+                "x": 50,
+                "y": 600
+              }
+            },
+            "workflow_end": {
+              "name": "workflow_end",
+              "groups": [],
+              "nodeLocation": {
+                "x": 2200,
+                "y": 600
+              }
+            },
+            "a1b2": {
+              "name": "evaluation",
+              "canvasName": "evaluation",
+              "summary": "Did tunnel verify succeed?",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "all_true_flag": true,
+                  "evaluation_groups": [
+                    {
+                      "all_true_flag": true,
+                      "evaluations": [
+                        {
+                          "operand_1": {
+                            "task": "job",
+                            "variable": "verify_status"
+                          },
+                          "operator": "==",
+                          "operand_2": {
+                            "task": "static",
+                            "variable": "success"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "return_value": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 250,
+                "y": 600
+              }
+            },
+            "b2c3": {
+              "name": "merge",
+              "canvasName": "merge",
+              "summary": "Build SNOW Implemented body",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "data_to_merge": [
+                    {
+                      "key": "state",
+                      "value": {
+                        "task": "static",
+                        "variable": "Implement"
+                      }
+                    },
+                    {
+                      "key": "work_notes",
+                      "value": {
+                        "task": "job",
+                        "variable": "spoke_site_name"
+                      }
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "merged_object": "$var.job.snow_success_body"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 500,
+                "y": 500
+              }
+            },
+            "c3d4": {
+              "name": "updateNormalChangeRequestById",
+              "canvasName": "updateNormalChangeRequestById",
+              "summary": "Update SNOW to Implemented",
+              "location": "Adapter",
+              "locationType": "Servicenow",
+              "app": "Servicenow",
+              "type": "automatic",
+              "displayName": "ServiceNow",
+              "variables": {
+                "incoming": {
+                  "changeId": "$var.job.snow_ticket_id",
+                  "change": "$var.job.snow_success_body",
+                  "adapter_id": "ServiceNow"
+                },
+                "outgoing": {
+                  "result": "$var.job.snow_update_result"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 750,
+                "y": 500
+              }
+            },
+            "d4e5": {
+              "name": "merge",
+              "canvasName": "merge",
+              "summary": "Build SNOW Failed body",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "data_to_merge": [
+                    {
+                      "key": "state",
+                      "value": {
+                        "task": "static",
+                        "variable": "Failed"
+                      }
+                    },
+                    {
+                      "key": "work_notes",
+                      "value": {
+                        "task": "job",
+                        "variable": "spoke_site_name"
+                      }
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "merged_object": "$var.job.snow_fail_body"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 500,
+                "y": 700
+              }
+            },
+            "e5f6": {
+              "name": "updateNormalChangeRequestById",
+              "canvasName": "updateNormalChangeRequestById",
+              "summary": "Update SNOW to Failed",
+              "location": "Adapter",
+              "locationType": "Servicenow",
+              "app": "Servicenow",
+              "type": "automatic",
+              "displayName": "ServiceNow",
+              "variables": {
+                "incoming": {
+                  "changeId": "$var.job.snow_ticket_id",
+                  "change": "$var.job.snow_fail_body",
+                  "adapter_id": "ServiceNow"
+                },
+                "outgoing": {
+                  "result": "$var.job.snow_fail_result"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 750,
+                "y": 700
+              }
+            },
+            "f6a7": {
+              "name": "merge",
+              "canvasName": "merge",
+              "summary": "Build hub IP record",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "data_to_merge": [
+                    {
+                      "key": "address",
+                      "value": {
+                        "task": "job",
+                        "variable": "hub_tunnel_ip"
+                      }
+                    },
+                    {
+                      "key": "description",
+                      "value": {
+                        "task": "job",
+                        "variable": "spoke_site_name"
+                      }
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "merged_object": "$var.job.hub_ip_body"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1100,
+                "y": 600
+              }
+            },
+            "a7b8": {
+              "name": "postIpamIpAddresses",
+              "canvasName": "postIpamIpAddresses",
+              "summary": "Create hub tunnel IP in NetBox",
+              "location": "Adapter",
+              "locationType": "Netbox",
+              "app": "Netbox",
+              "type": "automatic",
+              "displayName": "netbox-selab",
+              "variables": {
+                "incoming": {
+                  "data": "$var.job.hub_ip_body",
+                  "adapter_id": "netbox-selab"
+                },
+                "outgoing": {
+                  "result": "$var.job.hub_ip_result"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1350,
+                "y": 600
+              }
+            },
+            "b8c9": {
+              "name": "merge",
+              "canvasName": "merge",
+              "summary": "Build spoke IP record",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "data_to_merge": [
+                    {
+                      "key": "address",
+                      "value": {
+                        "task": "job",
+                        "variable": "spoke_tunnel_ip"
+                      }
+                    },
+                    {
+                      "key": "description",
+                      "value": {
+                        "task": "job",
+                        "variable": "spoke_site_name"
+                      }
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "merged_object": "$var.job.spoke_ip_body"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1600,
+                "y": 600
+              }
+            },
+            "c9d0": {
+              "name": "postIpamIpAddresses",
+              "canvasName": "postIpamIpAddresses",
+              "summary": "Create spoke tunnel IP in NetBox",
+              "location": "Adapter",
+              "locationType": "Netbox",
+              "app": "Netbox",
+              "type": "automatic",
+              "displayName": "netbox-selab",
+              "variables": {
+                "incoming": {
+                  "data": "$var.job.spoke_ip_body",
+                  "adapter_id": "netbox-selab"
+                },
+                "outgoing": {
+                  "result": "$var.job.spoke_ip_result"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1850,
+                "y": 600
+              }
+            },
+            "d0e1": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "Close out complete",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "close_out_status",
+                  "value": "complete"
+                },
+                "outgoing": {
+                  "value": "$var.job.close_out_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 2100,
+                "y": 600
+              }
+            },
+            "err1": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "SNOW update error",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "close_out_status",
+                  "value": "error_snow_update"
+                },
+                "outgoing": {
+                  "value": "$var.job.close_out_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 750,
+                "y": 870
+              }
+            },
+            "err2": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "NetBox update error",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "close_out_status",
+                  "value": "error_netbox_update"
+                },
+                "outgoing": {
+                  "value": "$var.job.close_out_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1350,
+                "y": 870
+              }
+            }
+          },
+          "transitions": {
+            "workflow_start": {
+              "a1b2": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "a1b2": {
+              "b2c3": {
+                "type": "standard",
+                "state": "success"
+              },
+              "d4e5": {
+                "type": "standard",
+                "state": "failure"
+              }
+            },
+            "b2c3": {
+              "c3d4": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "c3d4": {
+              "f6a7": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "d4e5": {
+              "e5f6": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "e5f6": {
+              "f6a7": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err1": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "f6a7": {
+              "a7b8": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "a7b8": {
+              "b8c9": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err2": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "b8c9": {
+              "c9d0": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "c9d0": {
+              "d0e1": {
+                "type": "standard",
+                "state": "success"
+              },
+              "err2": {
+                "type": "standard",
+                "state": "error"
+              }
+            },
+            "d0e1": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "err1": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "err2": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "workflow_end": {}
+          },
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "snow_ticket_id": {
+                "title": "snow_ticket_id",
+                "type": "string"
+              },
+              "spoke_site_name": {
+                "title": "spoke_site_name",
+                "type": "string"
+              },
+              "verify_status": {
+                "title": "verify_status",
+                "type": "string"
+              },
+              "hub_tunnel_ip": {
+                "title": "hub_tunnel_ip",
+                "type": "string"
+              },
+              "spoke_tunnel_ip": {
+                "title": "spoke_tunnel_ip",
+                "type": "string"
+              },
+              "allocated_prefix": {
+                "title": "allocated_prefix",
+                "type": "string"
+              }
+            },
+            "required": [
+              "snow_ticket_id",
+              "spoke_site_name",
+              "verify_status"
+            ]
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "close_out_status": {
+                "type": "string"
+              },
+              "snow_update_result": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      },
+      {
+        "iid": 9,
+        "type": "workflow",
+        "reference": "14b4e202-13cf-4fdf-977d-cb3365863868",
+        "folder": "/",
+        "document": {
+          "name": "VPN - Single-Spoke Orchestrator",
+          "type": "automation",
+          "canvasVersion": 3,
+          "font_size": 12,
+          "preAutomationTime": 0,
+          "sla": 0,
+          "created": "2026-04-15T00:00:00.000Z",
+          "created_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "last_updated": "2026-04-15T00:00:00.000Z",
+          "last_updated_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "createdVersion": "2024.1",
+          "lastUpdatedVersion": "2024.1",
+          "migrationVersion": 1,
+          "tags": [],
+          "groups": [],
+          "uuid": "b5a2ceec-6d64-4d20-8aa7-c0d687c9bcf9",
+          "scenarios": [],
+          "tasks": {
+            "workflow_start": {
+              "name": "workflow_start",
+              "groups": [],
+              "nodeLocation": {
+                "x": 50,
+                "y": 600
+              }
+            },
+            "workflow_end": {
+              "name": "workflow_end",
+              "groups": [],
+              "nodeLocation": {
+                "x": 4800,
+                "y": 600
+              }
+            },
+            "a0b0": {
+              "name": "merge",
+              "canvasName": "merge",
+              "summary": "Wrap hub hostname",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "data_to_merge": [
+                    {
+                      "key": "hostname",
+                      "value": {
+                        "task": "job",
+                        "variable": "hub_hostname"
+                      }
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "merged_object": "$var.job.hub_hostname_wrap"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 250,
+                "y": 600
+              }
+            },
+            "b0c0": {
+              "name": "makeData",
+              "canvasName": "makeData",
+              "summary": "Create hub devices array",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "input": "[\"<!hostname!>\"]",
+                  "outputType": "json",
+                  "variables": "$var.job.hub_hostname_wrap"
+                },
+                "outgoing": {
+                  "output": "$var.job.hub_devices"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 450,
+                "y": 600
+              }
+            },
+            "c0d0": {
+              "name": "merge",
+              "canvasName": "merge",
+              "summary": "Wrap spoke hostname",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "data_to_merge": [
+                    {
+                      "key": "hostname",
+                      "value": {
+                        "task": "job",
+                        "variable": "spoke_hostname"
+                      }
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "merged_object": "$var.job.spoke_hostname_wrap"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 650,
+                "y": 600
+              }
+            },
+            "d0e0": {
+              "name": "makeData",
+              "canvasName": "makeData",
+              "summary": "Create spoke devices array",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "input": "[\"<!hostname!>\"]",
+                  "outputType": "json",
+                  "variables": "$var.job.spoke_hostname_wrap"
+                },
+                "outgoing": {
+                  "output": "$var.job.spoke_devices"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 850,
+                "y": 600
+              }
+            },
+            "e0f0": {
+              "name": "childJob",
+              "canvasName": "childJob",
+              "summary": "Pre-Flight Check",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "task": "",
+                  "workflow": "@7a363f30062b628589e280f0: VPN - Pre-Flight Check",
+                  "variables": {
+                    "snow_ticket_id": {
+                      "task": "job",
+                      "value": "snow_ticket_id"
+                    },
+                    "hub_hostname": {
+                      "task": "job",
+                      "value": "hub_hostname"
+                    },
+                    "spoke_hostname": {
+                      "task": "job",
+                      "value": "spoke_hostname"
+                    },
+                    "hub_wan_interface": {
+                      "task": "job",
+                      "value": "hub_wan_interface"
+                    },
+                    "spoke_wan_interface": {
+                      "task": "job",
+                      "value": "spoke_wan_interface"
+                    },
+                    "hub_trustpoint": {
+                      "task": "job",
+                      "value": "hub_trustpoint"
+                    },
+                    "spoke_trustpoint": {
+                      "task": "job",
+                      "value": "spoke_trustpoint"
+                    }
+                  },
+                  "data_array": "",
+                  "transformation": "",
+                  "loopType": ""
+                },
+                "outgoing": {
+                  "job_details": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "job",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1050,
+                "y": 600
+              }
+            },
+            "f0a1": {
+              "name": "query",
+              "canvasName": "query",
+              "summary": "Extract preflight_status",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "pass_on_null": false,
+                  "query": "preflight_status",
+                  "obj": "$var.e0f0.job_details"
+                },
+                "outgoing": {
+                  "return_data": "$var.job.preflight_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1300,
+                "y": 600
+              }
+            },
+            "a1b1": {
+              "name": "evaluation",
+              "canvasName": "evaluation",
+              "summary": "Pre-flight passed?",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "all_true_flag": true,
+                  "evaluation_groups": [
+                    {
+                      "all_true_flag": true,
+                      "evaluations": [
+                        {
+                          "operand_1": {
+                            "task": "job",
+                            "variable": "preflight_status"
+                          },
+                          "operator": "==",
+                          "operand_2": {
+                            "task": "static",
+                            "variable": "success"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "return_value": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1500,
+                "y": 600
+              }
+            },
+            "b1c1": {
+              "name": "childJob",
+              "canvasName": "childJob",
+              "summary": "Tunnel Design - NetBox allocation",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "task": "",
+                  "workflow": "@7a363f30062b628589e280f0: VPN - Tunnel Design",
+                  "variables": {
+                    "netbox_prefix_pool_name": {
+                      "task": "job",
+                      "value": "netbox_prefix_pool_name"
+                    },
+                    "spoke_site_name": {
+                      "task": "job",
+                      "value": "spoke_site_name"
+                    },
+                    "spoke_as": {
+                      "task": "job",
+                      "value": "spoke_as"
+                    },
+                    "hub_wan_ip": {
+                      "task": "static",
+                      "value": ""
+                    },
+                    "spoke_wan_ip": {
+                      "task": "static",
+                      "value": ""
+                    },
+                    "hub_trustpoint": {
+                      "task": "job",
+                      "value": "hub_trustpoint"
+                    },
+                    "spoke_trustpoint": {
+                      "task": "job",
+                      "value": "spoke_trustpoint"
+                    },
+                    "crypto_map_name": {
+                      "task": "job",
+                      "value": "crypto_map_name"
+                    }
+                  },
+                  "data_array": "",
+                  "transformation": "",
+                  "loopType": ""
+                },
+                "outgoing": {
+                  "job_details": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "job",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 1750,
+                "y": 600
+              }
+            },
+            "c1d1": {
+              "name": "query",
+              "canvasName": "query",
+              "summary": "Extract tunnel_design_status",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "pass_on_null": false,
+                  "query": "taskStatus",
+                  "obj": "$var.b1c1.job_details"
+                },
+                "outgoing": {
+                  "return_data": "$var.job.tunnel_design_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 2000,
+                "y": 600
+              }
+            },
+            "d1e1": {
+              "name": "query",
+              "canvasName": "query",
+              "summary": "Extract allocated_prefix",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "pass_on_null": false,
+                  "query": "allocated_prefix",
+                  "obj": "$var.b1c1.job_details"
+                },
+                "outgoing": {
+                  "return_data": "$var.job.allocated_prefix"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 2150,
+                "y": 600
+              }
+            },
+            "e1f1": {
+              "name": "query",
+              "canvasName": "query",
+              "summary": "Extract hub_config_vars",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "pass_on_null": false,
+                  "query": "hub_config_vars",
+                  "obj": "$var.b1c1.job_details"
+                },
+                "outgoing": {
+                  "return_data": "$var.job.hub_config_vars"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 2300,
+                "y": 600
+              }
+            },
+            "f1a2": {
+              "name": "evaluation",
+              "canvasName": "evaluation",
+              "summary": "Tunnel design ok?",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "all_true_flag": true,
+                  "evaluation_groups": [
+                    {
+                      "all_true_flag": true,
+                      "evaluations": [
+                        {
+                          "operand_1": {
+                            "task": "job",
+                            "variable": "tunnel_design_status"
+                          },
+                          "operator": "==",
+                          "operand_2": {
+                            "task": "static",
+                            "variable": "success"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "return_value": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 2450,
+                "y": 600
+              }
+            },
+            "a2b2": {
+              "name": "childJob",
+              "canvasName": "childJob",
+              "summary": "Backup hub and spoke configs",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "task": "",
+                  "workflow": "@7a363f30062b628589e280f0: VPN - Config Backup",
+                  "variables": {
+                    "hub_hostname": {
+                      "task": "job",
+                      "value": "hub_hostname"
+                    },
+                    "spoke_hostname": {
+                      "task": "job",
+                      "value": "spoke_hostname"
+                    }
+                  },
+                  "data_array": "",
+                  "transformation": "",
+                  "loopType": ""
+                },
+                "outgoing": {
+                  "job_details": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "job",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 2650,
+                "y": 600
+              }
+            },
+            "b2c2": {
+              "name": "query",
+              "canvasName": "query",
+              "summary": "Extract backup_status",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "pass_on_null": false,
+                  "query": "taskStatus",
+                  "obj": "$var.a2b2.job_details"
+                },
+                "outgoing": {
+                  "return_data": "$var.job.backup_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 2900,
+                "y": 600
+              }
+            },
+            "c2d2": {
+              "name": "evaluation",
+              "canvasName": "evaluation",
+              "summary": "Backup ok?",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "all_true_flag": true,
+                  "evaluation_groups": [
+                    {
+                      "all_true_flag": true,
+                      "evaluations": [
+                        {
+                          "operand_1": {
+                            "task": "job",
+                            "variable": "backup_status"
+                          },
+                          "operator": "==",
+                          "operand_2": {
+                            "task": "static",
+                            "variable": "success"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "return_value": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 3050,
+                "y": 600
+              }
+            },
+            "d2e2": {
+              "name": "childJob",
+              "canvasName": "childJob",
+              "summary": "Configure Hub ASA",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "task": "",
+                  "workflow": "@7a363f30062b628589e280f0: VPN - Configure Hub",
+                  "variables": {
+                    "hub_hostname": {
+                      "task": "job",
+                      "value": "hub_hostname"
+                    },
+                    "hub_devices": {
+                      "task": "d0e0",
+                      "value": "output"
+                    },
+                    "hub_config_vars": {
+                      "task": "job",
+                      "value": "hub_config_vars"
+                    }
+                  },
+                  "data_array": "",
+                  "transformation": "",
+                  "loopType": ""
+                },
+                "outgoing": {
+                  "job_details": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "job",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 3250,
+                "y": 600
+              }
+            },
+            "e2f2": {
+              "name": "query",
+              "canvasName": "query",
+              "summary": "Extract hub_config_status",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "pass_on_null": false,
+                  "query": "taskStatus",
+                  "obj": "$var.d2e2.job_details"
+                },
+                "outgoing": {
+                  "return_data": "$var.job.hub_config_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 3500,
+                "y": 600
+              }
+            },
+            "f2a3": {
+              "name": "evaluation",
+              "canvasName": "evaluation",
+              "summary": "Hub configured ok?",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "all_true_flag": true,
+                  "evaluation_groups": [
+                    {
+                      "all_true_flag": true,
+                      "evaluations": [
+                        {
+                          "operand_1": {
+                            "task": "job",
+                            "variable": "hub_config_status"
+                          },
+                          "operator": "==",
+                          "operand_2": {
+                            "task": "static",
+                            "variable": "success"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "return_value": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 3650,
+                "y": 600
+              }
+            },
+            "a3b3": {
+              "name": "childJob",
+              "canvasName": "childJob",
+              "summary": "Configure Spoke ASA",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "task": "",
+                  "workflow": "@7a363f30062b628589e280f0: VPN - Configure Spoke",
+                  "variables": {
+                    "spoke_hostname": {
+                      "task": "job",
+                      "value": "spoke_hostname"
+                    },
+                    "spoke_devices": {
+                      "task": "d0e0",
+                      "value": "output"
+                    },
+                    "spoke_config_vars": {
+                      "task": "job",
+                      "value": "hub_config_vars"
+                    }
+                  },
+                  "data_array": "",
+                  "transformation": "",
+                  "loopType": ""
+                },
+                "outgoing": {
+                  "job_details": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "job",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 3850,
+                "y": 600
+              }
+            },
+            "b3c3": {
+              "name": "query",
+              "canvasName": "query",
+              "summary": "Extract spoke_config_status",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "pass_on_null": false,
+                  "query": "taskStatus",
+                  "obj": "$var.a3b3.job_details"
+                },
+                "outgoing": {
+                  "return_data": "$var.job.spoke_config_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 4100,
+                "y": 600
+              }
+            },
+            "c3d3": {
+              "name": "evaluation",
+              "canvasName": "evaluation",
+              "summary": "Spoke configured ok?",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "all_true_flag": true,
+                  "evaluation_groups": [
+                    {
+                      "all_true_flag": true,
+                      "evaluations": [
+                        {
+                          "operand_1": {
+                            "task": "job",
+                            "variable": "spoke_config_status"
+                          },
+                          "operator": "==",
+                          "operand_2": {
+                            "task": "static",
+                            "variable": "success"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                "outgoing": {
+                  "return_value": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 4250,
+                "y": 600
+              }
+            },
+            "d3e3": {
+              "name": "childJob",
+              "canvasName": "childJob",
+              "summary": "Verify IPsec + BGP",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "task": "",
+                  "workflow": "@7a363f30062b628589e280f0: VPN - Verify Tunnel",
+                  "variables": {
+                    "hub_hostname": {
+                      "task": "job",
+                      "value": "hub_hostname"
+                    },
+                    "spoke_hostname": {
+                      "task": "job",
+                      "value": "spoke_hostname"
+                    },
+                    "hub_devices": {
+                      "task": "d0e0",
+                      "value": "output"
+                    },
+                    "spoke_devices": {
+                      "task": "d0e0",
+                      "value": "output"
+                    },
+                    "hub_tunnel_ip": {
+                      "task": "static",
+                      "value": ""
+                    },
+                    "spoke_tunnel_ip": {
+                      "task": "static",
+                      "value": ""
+                    },
+                    "spoke_as": {
+                      "task": "job",
+                      "value": "spoke_as"
+                    },
+                    "verify_timeout_minutes": {
+                      "task": "job",
+                      "value": "verify_timeout_minutes"
+                    }
+                  },
+                  "data_array": "",
+                  "transformation": "",
+                  "loopType": ""
+                },
+                "outgoing": {
+                  "job_details": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "job",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 4450,
+                "y": 600
+              }
+            },
+            "e3f3": {
+              "name": "query",
+              "canvasName": "query",
+              "summary": "Extract verify_status",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "pass_on_null": false,
+                  "query": "verify_status",
+                  "obj": "$var.d3e3.job_details"
+                },
+                "outgoing": {
+                  "return_data": "$var.job.verify_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 4550,
+                "y": 600
+              }
+            },
+            "f3a4": {
+              "name": "childJob",
+              "canvasName": "childJob",
+              "summary": "Close Out \u2014 update SNOW + NetBox",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "task": "",
+                  "workflow": "@7a363f30062b628589e280f0: VPN - Close Out",
+                  "variables": {
+                    "snow_ticket_id": {
+                      "task": "job",
+                      "value": "snow_ticket_id"
+                    },
+                    "spoke_site_name": {
+                      "task": "job",
+                      "value": "spoke_site_name"
+                    },
+                    "verify_status": {
+                      "task": "job",
+                      "value": "verify_status"
+                    },
+                    "hub_tunnel_ip": {
+                      "task": "static",
+                      "value": ""
+                    },
+                    "spoke_tunnel_ip": {
+                      "task": "static",
+                      "value": ""
+                    },
+                    "allocated_prefix": {
+                      "task": "job",
+                      "value": "allocated_prefix"
+                    }
+                  },
+                  "data_array": "",
+                  "transformation": "",
+                  "loopType": ""
+                },
+                "outgoing": {
+                  "job_details": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "job",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 4700,
+                "y": 600
+              }
+            },
+            "rb01": {
+              "name": "childJob",
+              "canvasName": "childJob",
+              "summary": "Rollback hub only",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "task": "",
+                  "workflow": "@7a363f30062b628589e280f0: VPN - Rollback",
+                  "variables": {
+                    "hub_hostname": {
+                      "task": "job",
+                      "value": "hub_hostname"
+                    },
+                    "spoke_hostname": {
+                      "task": "job",
+                      "value": "spoke_hostname"
+                    },
+                    "hub_devices": {
+                      "task": "d0e0",
+                      "value": "output"
+                    },
+                    "spoke_devices": {
+                      "task": "d0e0",
+                      "value": "output"
+                    },
+                    "hub_config_vars": {
+                      "task": "job",
+                      "value": "hub_config_vars"
+                    },
+                    "spoke_config_vars": {
+                      "task": "static",
+                      "value": {}
+                    },
+                    "configured_hub": {
+                      "task": "static",
+                      "value": true
+                    },
+                    "configured_spoke": {
+                      "task": "static",
+                      "value": false
+                    }
+                  },
+                  "data_array": "",
+                  "transformation": "",
+                  "loopType": ""
+                },
+                "outgoing": {
+                  "job_details": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "job",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 3650,
+                "y": 870
+              }
+            },
+            "rb02": {
+              "name": "childJob",
+              "canvasName": "childJob",
+              "summary": "Rollback hub + spoke",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "task": "",
+                  "workflow": "@7a363f30062b628589e280f0: VPN - Rollback",
+                  "variables": {
+                    "hub_hostname": {
+                      "task": "job",
+                      "value": "hub_hostname"
+                    },
+                    "spoke_hostname": {
+                      "task": "job",
+                      "value": "spoke_hostname"
+                    },
+                    "hub_devices": {
+                      "task": "d0e0",
+                      "value": "output"
+                    },
+                    "spoke_devices": {
+                      "task": "d0e0",
+                      "value": "output"
+                    },
+                    "hub_config_vars": {
+                      "task": "job",
+                      "value": "hub_config_vars"
+                    },
+                    "spoke_config_vars": {
+                      "task": "static",
+                      "value": {}
+                    },
+                    "configured_hub": {
+                      "task": "static",
+                      "value": true
+                    },
+                    "configured_spoke": {
+                      "task": "static",
+                      "value": true
+                    }
+                  },
+                  "data_array": "",
+                  "transformation": "",
+                  "loopType": ""
+                },
+                "outgoing": {
+                  "job_details": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "job",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 4250,
+                "y": 870
+              }
+            },
+            "rb03": {
+              "name": "childJob",
+              "canvasName": "childJob",
+              "summary": "Close Out with Failed status",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "task": "",
+                  "workflow": "@7a363f30062b628589e280f0: VPN - Close Out",
+                  "variables": {
+                    "snow_ticket_id": {
+                      "task": "job",
+                      "value": "snow_ticket_id"
+                    },
+                    "spoke_site_name": {
+                      "task": "job",
+                      "value": "spoke_site_name"
+                    },
+                    "verify_status": {
+                      "task": "static",
+                      "value": "failed"
+                    },
+                    "hub_tunnel_ip": {
+                      "task": "static",
+                      "value": ""
+                    },
+                    "spoke_tunnel_ip": {
+                      "task": "static",
+                      "value": ""
+                    },
+                    "allocated_prefix": {
+                      "task": "static",
+                      "value": ""
+                    }
+                  },
+                  "data_array": "",
+                  "transformation": "",
+                  "loopType": ""
+                },
+                "outgoing": {
+                  "job_details": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "job",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 4550,
+                "y": 870
+              }
+            }
+          },
+          "transitions": {
+            "workflow_start": {
+              "a0b0": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "a0b0": {
+              "b0c0": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "b0c0": {
+              "c0d0": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "c0d0": {
+              "d0e0": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "d0e0": {
+              "e0f0": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "e0f0": {
+              "f0a1": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "f0a1": {
+              "a1b1": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "a1b1": {
+              "b1c1": {
+                "type": "standard",
+                "state": "success"
+              },
+              "rb03": {
+                "type": "standard",
+                "state": "failure"
+              }
+            },
+            "b1c1": {
+              "c1d1": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "c1d1": {
+              "d1e1": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "d1e1": {
+              "e1f1": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "e1f1": {
+              "f1a2": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "f1a2": {
+              "a2b2": {
+                "type": "standard",
+                "state": "success"
+              },
+              "rb03": {
+                "type": "standard",
+                "state": "failure"
+              }
+            },
+            "a2b2": {
+              "b2c2": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "b2c2": {
+              "c2d2": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "c2d2": {
+              "d2e2": {
+                "type": "standard",
+                "state": "success"
+              },
+              "rb03": {
+                "type": "standard",
+                "state": "failure"
+              }
+            },
+            "d2e2": {
+              "e2f2": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "e2f2": {
+              "f2a3": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "f2a3": {
+              "a3b3": {
+                "type": "standard",
+                "state": "success"
+              },
+              "rb01": {
+                "type": "standard",
+                "state": "failure"
+              }
+            },
+            "a3b3": {
+              "b3c3": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "b3c3": {
+              "c3d3": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "c3d3": {
+              "d3e3": {
+                "type": "standard",
+                "state": "success"
+              },
+              "rb02": {
+                "type": "standard",
+                "state": "failure"
+              }
+            },
+            "d3e3": {
+              "e3f3": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "e3f3": {
+              "f3a4": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "f3a4": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "rb01": {
+              "rb03": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "rb02": {
+              "rb03": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "rb03": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "workflow_end": {}
+          },
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "snow_ticket_id": {
+                "title": "snow_ticket_id",
+                "type": "string"
+              },
+              "hub_hostname": {
+                "title": "hub_hostname",
+                "type": "string"
+              },
+              "spoke_hostname": {
+                "title": "spoke_hostname",
+                "type": "string"
+              },
+              "spoke_site_name": {
+                "title": "spoke_site_name",
+                "type": "string"
+              },
+              "hub_wan_interface": {
+                "title": "hub_wan_interface",
+                "type": "string"
+              },
+              "spoke_wan_interface": {
+                "title": "spoke_wan_interface",
+                "type": "string"
+              },
+              "hub_trustpoint": {
+                "title": "hub_trustpoint",
+                "type": "string"
+              },
+              "spoke_trustpoint": {
+                "title": "spoke_trustpoint",
+                "type": "string"
+              },
+              "spoke_as": {
+                "title": "spoke_as",
+                "type": "number"
+              },
+              "netbox_prefix_pool_name": {
+                "title": "netbox_prefix_pool_name",
+                "type": "string"
+              },
+              "crypto_map_name": {
+                "title": "crypto_map_name",
+                "type": "string"
+              },
+              "verify_timeout_minutes": {
+                "title": "verify_timeout_minutes",
+                "type": "number"
+              }
+            },
+            "required": [
+              "snow_ticket_id",
+              "hub_hostname",
+              "spoke_hostname",
+              "spoke_site_name",
+              "spoke_as",
+              "crypto_map_name"
+            ]
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "verify_status": {
+                "type": "string"
+              },
+              "preflight_status": {
+                "type": "string"
+              },
+              "tunnel_design_status": {
+                "type": "string"
+              },
+              "backup_status": {
+                "type": "string"
+              },
+              "hub_config_status": {
+                "type": "string"
+              },
+              "spoke_config_status": {
+                "type": "string"
+              },
+              "allocated_prefix": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      {
+        "iid": 10,
+        "type": "workflow",
+        "reference": "76e77604-5669-4021-ac68-a1d367f17620",
+        "folder": "/",
+        "document": {
+          "name": "VPN - Batch Orchestrator",
+          "type": "automation",
+          "canvasVersion": 3,
+          "font_size": 12,
+          "preAutomationTime": 0,
+          "sla": 0,
+          "created": "2026-04-15T00:00:00.000Z",
+          "created_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "last_updated": "2026-04-15T00:00:00.000Z",
+          "last_updated_by": {
+            "provenance": "CloudAAA",
+            "username": "admin@itential",
+            "firstname": "Admin",
+            "inactive": false,
+            "sso": false
+          },
+          "createdVersion": "2024.1",
+          "lastUpdatedVersion": "2024.1",
+          "migrationVersion": 1,
+          "tags": [],
+          "groups": [],
+          "uuid": "a8695a48-a5cc-441b-a6d5-f44597dd88b1",
+          "scenarios": [],
+          "tasks": {
+            "workflow_start": {
+              "name": "workflow_start",
+              "groups": [],
+              "nodeLocation": {
+                "x": 50,
+                "y": 600
+              }
+            },
+            "workflow_end": {
+              "name": "workflow_end",
+              "groups": [],
+              "nodeLocation": {
+                "x": 900,
+                "y": 600
+              }
+            },
+            "a1b2": {
+              "name": "childJob",
+              "canvasName": "childJob",
+              "summary": "Provision all spokes (sequential)",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "task": "",
+                  "workflow": "@7a363f30062b628589e280f0: VPN - Single-Spoke Orchestrator",
+                  "variables": {},
+                  "data_array": "$var.job.spokes",
+                  "transformation": "",
+                  "loopType": "sequential"
+                },
+                "outgoing": {
+                  "job_details": null
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "job",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 250,
+                "y": 600
+              }
+            },
+            "b2c3": {
+              "name": "query",
+              "canvasName": "query",
+              "summary": "Extract batch_results",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "pass_on_null": false,
+                  "query": "loop",
+                  "obj": "$var.a1b2.job_details"
+                },
+                "outgoing": {
+                  "return_data": "$var.job.batch_results"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 550,
+                "y": 600
+              }
+            },
+            "c3d4": {
+              "name": "newVariable",
+              "canvasName": "newVariable",
+              "summary": "Batch complete",
+              "location": "Application",
+              "locationType": null,
+              "app": "WorkFlowEngine",
+              "type": "operation",
+              "displayName": "WorkFlowEngine",
+              "variables": {
+                "incoming": {
+                  "name": "batch_status",
+                  "value": "complete"
+                },
+                "outgoing": {
+                  "value": "$var.job.batch_status"
+                },
+                "error": "",
+                "decorators": []
+              },
+              "groups": [],
+              "actor": "Pronghorn",
+              "scheduled": false,
+              "nodeLocation": {
+                "x": 750,
+                "y": 600
+              }
+            }
+          },
+          "transitions": {
+            "workflow_start": {
+              "a1b2": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "a1b2": {
+              "b2c3": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "b2c3": {
+              "c3d4": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "c3d4": {
+              "workflow_end": {
+                "type": "standard",
+                "state": "success"
+              }
+            },
+            "workflow_end": {}
+          },
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "spokes": {
+                "title": "spokes",
+                "type": "array",
+                "description": "Array of spoke definition objects, each matching Single-Spoke Orchestrator inputs"
+              },
+              "max_parallel": {
+                "title": "max_parallel",
+                "type": "number"
+              }
+            },
+            "required": [
+              "spokes"
+            ]
+          },
+          "outputSchema": {
+            "type": "object",
+            "properties": {
+              "batch_results": {
+                "type": "array"
+              },
+              "batch_status": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      {
+        "iid": 11,
+        "type": "mopCommandTemplate",
+        "reference": "@7a363f30062b628589e280f0: CT-ASA-Get-WAN-IP",
+        "folder": "/",
+        "document": {
+          "name": "CT-ASA-Get-WAN-IP",
+          "description": "Get WAN interface IP from ASA",
+          "os": "",
+          "passRule": true,
+          "ignoreWarnings": false,
+          "commands": [
+            {
+              "command": "show interface <!wan_interface!>",
+              "passRule": true,
+              "rules": [
+                {
+                  "rule": "Internet address is",
+                  "eval": "contains",
+                  "severity": "error",
+                  "evaluation": "pass"
+                },
+                {
+                  "rule": "line protocol is up",
+                  "eval": "contains",
+                  "severity": "error",
+                  "evaluation": "pass"
+                }
+              ]
+            }
+          ],
+          "tags": [],
+          "created": 1744934400000,
+          "createdBy": null,
+          "lastUpdated": 1744934400000,
+          "lastUpdatedBy": null
+        }
+      },
+      {
+        "iid": 12,
+        "type": "mopCommandTemplate",
+        "reference": "@7a363f30062b628589e280f0: CT-ASA-Verify-Trustpoint",
+        "folder": "/",
+        "document": {
+          "name": "CT-ASA-Verify-Trustpoint",
+          "description": "Verify certificate trustpoint exists on ASA",
+          "os": "",
+          "passRule": true,
+          "ignoreWarnings": false,
+          "commands": [
+            {
+              "command": "show crypto ca trustpoints <!trustpoint_name!>",
+              "passRule": true,
+              "rules": [
+                {
+                  "rule": "<!trustpoint_name!>",
+                  "eval": "contains",
+                  "severity": "error",
+                  "evaluation": "pass"
+                }
+              ]
+            }
+          ],
+          "tags": [],
+          "created": 1744934400000,
+          "createdBy": null,
+          "lastUpdated": 1744934400000,
+          "lastUpdatedBy": null
+        }
+      },
+      {
+        "iid": 13,
+        "type": "mopCommandTemplate",
+        "reference": "@7a363f30062b628589e280f0: CT-ASA-Hub-IPsec-Config",
+        "folder": "/",
+        "document": {
+          "name": "CT-ASA-Hub-IPsec-Config",
+          "description": "Apply IPsec crypto map entry and BGP neighbor on hub ASA",
+          "os": "",
+          "passRule": true,
+          "ignoreWarnings": false,
+          "commands": [
+            {
+              "command": "configure terminal",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "crypto map <!crypto_map_name!> <!seq_num!> match address VPN-ACL-<!seq_num!>",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "crypto map <!crypto_map_name!> <!seq_num!> set peer <!spoke_wan_ip!>",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "crypto map <!crypto_map_name!> <!seq_num!> set ikev2 ipsec-proposal HIGH",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "crypto map <!crypto_map_name!> <!seq_num!> set trustpoint <!hub_trustpoint!>",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "router bgp 65000",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": " neighbor <!spoke_tunnel_ip!> remote-as <!spoke_as!>",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": " neighbor <!spoke_tunnel_ip!> activate",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "end",
+              "passRule": true,
+              "rules": [
+                {
+                  "rule": "ERROR",
+                  "eval": "!contains",
+                  "severity": "error",
+                  "evaluation": "pass"
+                }
+              ]
+            }
+          ],
+          "tags": [],
+          "created": 1744934400000,
+          "createdBy": null,
+          "lastUpdated": 1744934400000,
+          "lastUpdatedBy": null
+        }
+      },
+      {
+        "iid": 14,
+        "type": "mopCommandTemplate",
+        "reference": "@7a363f30062b628589e280f0: CT-ASA-Spoke-IPsec-Config",
+        "folder": "/",
+        "document": {
+          "name": "CT-ASA-Spoke-IPsec-Config",
+          "description": "Apply full IPsec tunnel and BGP config on spoke ASA",
+          "os": "",
+          "passRule": true,
+          "ignoreWarnings": false,
+          "commands": [
+            {
+              "command": "configure terminal",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "crypto ikev2 policy 10",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": " encryption aes-256",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": " integrity sha256",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": " group 14",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": " prf sha256",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": " lifetime seconds 86400",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "crypto ipsec ikev2 ipsec-proposal HIGH",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": " protocol esp encryption aes-gcm-256",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": " protocol esp integrity sha-256",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "tunnel-group <!hub_wan_ip!> type ipsec-l2l",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "tunnel-group <!hub_wan_ip!> ipsec-attributes",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": " ikev2 local-authentication certificate <!spoke_trustpoint!>",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": " ikev2 remote-authentication certificate",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "crypto map VPN-MAP 10 match address VPN-ACL-HUB",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "crypto map VPN-MAP 10 set peer <!hub_wan_ip!>",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "crypto map VPN-MAP 10 set ikev2 ipsec-proposal HIGH",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "crypto map VPN-MAP 10 set pfs group14",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "router bgp <!spoke_as!>",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": " neighbor <!hub_tunnel_ip!> remote-as 65000",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": " neighbor <!hub_tunnel_ip!> activate",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "end",
+              "passRule": true,
+              "rules": [
+                {
+                  "rule": "ERROR",
+                  "eval": "!contains",
+                  "severity": "error",
+                  "evaluation": "pass"
+                }
+              ]
+            }
+          ],
+          "tags": [],
+          "created": 1744934400000,
+          "createdBy": null,
+          "lastUpdated": 1744934400000,
+          "lastUpdatedBy": null
+        }
+      },
+      {
+        "iid": 15,
+        "type": "mopCommandTemplate",
+        "reference": "@7a363f30062b628589e280f0: CT-ASA-Verify-IKEv2-SA",
+        "folder": "/",
+        "document": {
+          "name": "CT-ASA-Verify-IKEv2-SA",
+          "description": "Verify IKEv2 SA is established on ASA",
+          "os": "",
+          "passRule": true,
+          "ignoreWarnings": false,
+          "commands": [
+            {
+              "command": "show crypto ikev2 sa",
+              "passRule": true,
+              "rules": [
+                {
+                  "rule": "MM_ACTIVE",
+                  "eval": "contains",
+                  "severity": "error",
+                  "evaluation": "pass"
+                },
+                {
+                  "rule": "Child SA:",
+                  "eval": "contains",
+                  "severity": "error",
+                  "evaluation": "pass"
+                }
+              ]
+            }
+          ],
+          "tags": [],
+          "created": 1744934400000,
+          "createdBy": null,
+          "lastUpdated": 1744934400000,
+          "lastUpdatedBy": null
+        }
+      },
+      {
+        "iid": 16,
+        "type": "mopCommandTemplate",
+        "reference": "@7a363f30062b628589e280f0: CT-ASA-Verify-BGP",
+        "folder": "/",
+        "document": {
+          "name": "CT-ASA-Verify-BGP",
+          "description": "Verify BGP neighbor adjacency on ASA",
+          "os": "",
+          "passRule": true,
+          "ignoreWarnings": false,
+          "commands": [
+            {
+              "command": "show bgp neighbors <!neighbor_ip!> | include BGP state",
+              "passRule": true,
+              "rules": [
+                {
+                  "rule": "BGP state = Established",
+                  "eval": "contains",
+                  "severity": "error",
+                  "evaluation": "pass"
+                }
+              ]
+            }
+          ],
+          "tags": [],
+          "created": 1744934400000,
+          "createdBy": null,
+          "lastUpdated": 1744934400000,
+          "lastUpdatedBy": null
+        }
+      },
+      {
+        "iid": 17,
+        "type": "mopCommandTemplate",
+        "reference": "@7a363f30062b628589e280f0: CT-ASA-Ping-Tunnel",
+        "folder": "/",
+        "document": {
+          "name": "CT-ASA-Ping-Tunnel",
+          "description": "Ping across tunnel interface on ASA",
+          "os": "",
+          "passRule": true,
+          "ignoreWarnings": false,
+          "commands": [
+            {
+              "command": "ping <!target_ip!> source <!source_ip!> repeat 5",
+              "passRule": true,
+              "rules": [
+                {
+                  "rule": "Success rate is 100 percent",
+                  "eval": "contains",
+                  "severity": "error",
+                  "evaluation": "pass"
+                },
+                {
+                  "rule": "!!!!",
+                  "eval": "contains",
+                  "severity": "error",
+                  "evaluation": "pass"
+                }
+              ]
+            }
+          ],
+          "tags": [],
+          "created": 1744934400000,
+          "createdBy": null,
+          "lastUpdated": 1744934400000,
+          "lastUpdatedBy": null
+        }
+      },
+      {
+        "iid": 18,
+        "type": "mopCommandTemplate",
+        "reference": "@7a363f30062b628589e280f0: CT-ASA-Hub-Rollback",
+        "folder": "/",
+        "document": {
+          "name": "CT-ASA-Hub-Rollback",
+          "description": "Remove tunnel crypto map entry and BGP neighbor from hub ASA",
+          "os": "",
+          "passRule": true,
+          "ignoreWarnings": false,
+          "commands": [
+            {
+              "command": "configure terminal",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "router bgp 65000",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": " no neighbor <!spoke_tunnel_ip!>",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "no crypto map <!crypto_map_name!> <!seq_num!>",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "end",
+              "passRule": true,
+              "rules": [
+                {
+                  "rule": "ERROR",
+                  "eval": "!contains",
+                  "severity": "error",
+                  "evaluation": "pass"
+                }
+              ]
+            }
+          ],
+          "tags": [],
+          "created": 1744934400000,
+          "createdBy": null,
+          "lastUpdated": 1744934400000,
+          "lastUpdatedBy": null
+        }
+      },
+      {
+        "iid": 19,
+        "type": "mopCommandTemplate",
+        "reference": "@7a363f30062b628589e280f0: CT-ASA-Spoke-Rollback",
+        "folder": "/",
+        "document": {
+          "name": "CT-ASA-Spoke-Rollback",
+          "description": "Remove full tunnel config from spoke ASA",
+          "os": "",
+          "passRule": true,
+          "ignoreWarnings": false,
+          "commands": [
+            {
+              "command": "configure terminal",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "no crypto map VPN-MAP 10",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "no tunnel-group <!hub_wan_ip!>",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "no crypto ikev2 policy 10",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "router bgp <!spoke_as!>",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": " no neighbor <!hub_tunnel_ip!>",
+              "passRule": false,
+              "rules": []
+            },
+            {
+              "command": "end",
+              "passRule": true,
+              "rules": [
+                {
+                  "rule": "ERROR",
+                  "eval": "!contains",
+                  "severity": "error",
+                  "evaluation": "pass"
+                }
+              ]
+            }
+          ],
+          "tags": [],
+          "created": 1744934400000,
+          "createdBy": null,
+          "lastUpdated": 1744934400000,
+          "lastUpdatedBy": null
+        }
+      }
+    ],
+    "created": "2026-04-15T00:00:00.000Z",
+    "createdBy": {
+      "_id": "000000000000000000000000",
+      "provenance": "CloudAAA",
+      "username": "admin@itential"
+    },
+    "lastUpdated": "2026-04-15T00:00:00.000Z",
+    "lastUpdatedBy": {
+      "_id": "000000000000000000000000",
+      "provenance": "CloudAAA",
+      "username": "admin@itential"
+    }
+  }
+}
